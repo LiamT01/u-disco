@@ -1,0 +1,22 @@
+seed: 0
+
+use_atac: true
+use_control: true
+
+backend_model_module: 'src.models.u_disco'
+backend_model_class: 'UDisCo'
+vocab_size: 5
+n_epi: 1
+dropout_p: 0.1
+linear_upsample: true
+noise_std: 0.1
+
+n_epochs: 200
+lr: 5e-4
+bs: 32
+
+jitter_max: 1000
+reverse_complement_p: 0.2
+
+use_prior: true
+reg_loss_weight: 15000
