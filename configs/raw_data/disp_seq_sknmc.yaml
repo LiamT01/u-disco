@@ -1,10 +1,10 @@
 cell_type: 'SKNMC'
 split_dir: 'metadata/splits/SKNMC'
 context_len: 20000
-held_out_chrs: ['chr1', 'chr8', 'chr21']
+held_out_chrs: [ 'chr1', 'chr8', 'chr21' ]
 train_ratio: 0.8
 bed_path: 'data/SKNMC_wt_150bp_bisox_peak_in_both_reps_rename.bed'
-bed_columns: ['chr', 'start', 'end', 'name', 'score', 'strand', 'signal', 'pvalue', 'qvalue']
+bed_columns: [ 'chr', 'start', 'end', 'name', 'score', 'strand', 'signal', 'pvalue', 'qvalue' ]
 control_paths:
   - 'data/GSM5736448_SKNMC_Input_rep1.bw'
   - 'data/GSM5736449_SKNMC_Input_rep2.bw'
