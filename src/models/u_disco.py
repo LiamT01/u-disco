@@ -160,11 +160,3 @@ class UDisCo(IBackendModel):
             dropout_p=config.model_dev.dropout_p,
             use_control=config.model_dev.use_control,
         )
-
-
-if __name__ == '__main__':
-    model = UDisCo(in_channels=5, linear=True, dropout_p=0.1, use_control=True)
-    _x = torch.randn(4, 20000, 5)
-    _control = torch.randn(4, 20000)
-    _y = model(_x, _control)
-    print(_y.shape)
