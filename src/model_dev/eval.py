@@ -95,7 +95,7 @@ def eval_exp(
     model = DNASeqModel.from_config(config).to(device).float()
 
     output_path = osp.join(exp_dir, "eval.log")
-    print(f"Writing evaluation results to {output_path}")
+    print(f"Writing evaluation results to {output_path}", flush=True)
     for checkpoint_path in tqdm(sorted(glob(osp.join(exp_dir, "checkpoints", "*.pth")))):
         loss, pcc, pcc_std = eval_checkpoint(config, test_loader, model, checkpoint_path, device)
         with open(output_path, "a") as f:
