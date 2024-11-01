@@ -1,0 +1,14 @@
+Bio==1.7.1
+biopython==1.83
+h5py==3.11.0
+loguru==0.7.2
+modisco_lite==2.2.1
+numpy==2.1.2
+omegaconf==2.3.0
+pandas==2.2.3
+pyBigWig==0.3.23
+scipy==1.14.1
+shap==0.45.0
+torch==2.2.0
+torch_ema==0.3
+tqdm==4.66.2
