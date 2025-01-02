@@ -11,12 +11,14 @@ class DNASeqModel(ISeqModel):
     n_epi: int
     noise_std: float
     backend: IBackendModel
+    context_len: int
 
     def __init__(
             self,
             vocab_size: int,
             n_epi: int,
             backend: IBackendModel,
+            context_len: int,
             noise_std: float = 0.1,
     ):
         super().__init__()
@@ -24,6 +26,7 @@ class DNASeqModel(ISeqModel):
         self.n_epi = n_epi
         self.noise_std = noise_std
         self.backend = backend
+        self.context_len = context_len
 
     def forward(
             self,
@@ -52,12 +55,11 @@ class DNASeqModel(ISeqModel):
         prof_loss = torch.mean(neg_log_likelihood)
         return prof_loss
 
-    @staticmethod
-    def reg_loss(input_grads: torch.Tensor) -> torch.Tensor:
+    def reg_loss(self, input_grads: torch.Tensor) -> torch.Tensor:
         return fourier_att_prior_loss(
             torch.ones(input_grads.size(0)).to(input_grads.device),
             input_grads,
-            freq_limit=3000,
+            freq_limit=int(self.context_len / (20 / 3)),
             limit_softness=0.2,
             att_prior_grad_smooth_sigma=3,
         )
@@ -117,4 +119,5 @@ class DNASeqModel(ISeqModel):
             n_epi=config.model_dev.n_epi,
             backend=backend,
             noise_std=config.model_dev.noise_std,
+            context_len=config.raw_data.context_len,
         )
