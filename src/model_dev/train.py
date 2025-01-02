@@ -2,8 +2,10 @@ import os
 import os.path as osp
 from contextlib import nullcontext
 from datetime import datetime
+from time import sleep
 from typing import Tuple
 
+import numpy as np
 import torch
 import wandb
 from omegaconf import OmegaConf
@@ -12,7 +14,7 @@ from torch.utils.data import DataLoader
 from torch_ema import ExponentialMovingAverage
 from tqdm import tqdm
 
-from src.data import DisPDataset
+from src.data import SeqDataset
 from src.metrics import pearson_corr
 from src.models import DNASeqModel
 from src.types import ExpConfig, t_dataset_item
@@ -87,6 +89,20 @@ def run_single_epoch(
 
 
 def train_epochs(config: ExpConfig) -> str:
+    output_dir = f'exp/train_{datetime.now():%Y-%m-%d_%H:%M:%S}'
+    while osp.exists(output_dir):
+        num_seconds = np.clip(np.random.rand() * 4, 1, 3).item()
+        sleep(num_seconds)
+        output_dir = f'exp/train_{datetime.now():%Y-%m-%d_%H:%M:%S}'
+
+    ckpt_dir = osp.join(output_dir, 'checkpoints')
+    logger = get_logger(osp.join(output_dir, 'train.log'))
+    os.makedirs(ckpt_dir, exist_ok=True)
+
+    # Save the config
+    with open(osp.join(output_dir, 'config.yaml'), 'w') as f:
+        OmegaConf.save(config, f)
+
     wandb.login()
     wandb.init(
         name=f"{config.model_dev.backend_model_class}-{config.raw_data.context_len / 1000}k-"
@@ -94,7 +110,7 @@ def train_epochs(config: ExpConfig) -> str:
         project="disp",
     )
 
-    train_set = DisPDataset(
+    train_set = SeqDataset(
         seed=config.model_dev.seed,
         split_dir=config.raw_data.split_dir,
         context_len=config.raw_data.context_len,
@@ -113,7 +129,7 @@ def train_epochs(config: ExpConfig) -> str:
         reverse_complement_p=config.model_dev.reverse_complement_p,
     )
 
-    val_set = DisPDataset(
+    val_set = SeqDataset(
         seed=config.model_dev.seed,
         split_dir=config.raw_data.split_dir,
         context_len=config.raw_data.context_len,
@@ -140,15 +156,6 @@ def train_epochs(config: ExpConfig) -> str:
     optimizer = AdamW(model.parameters(), lr=config.model_dev.lr)
 
     device = set_device(config.model_dev.seed)
-
-    output_dir = f'exp/train_{datetime.now():%Y-%m-%d_%H:%M:%S}'
-    ckpt_dir = osp.join(output_dir, 'checkpoints')
-    logger = get_logger(osp.join(output_dir, 'train.log'))
-    os.makedirs(ckpt_dir, exist_ok=True)
-
-    # Save the config
-    with open(osp.join(output_dir, 'config.yaml'), 'w') as f:
-        OmegaConf.save(config, f)
 
     logger.info(model)
 
