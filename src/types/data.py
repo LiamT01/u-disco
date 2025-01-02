@@ -20,3 +20,14 @@ t_dataset_item = TypedDict('t_dataset_item', {
     "end": int,
     "chr": str,
 })
+
+t_dataset_item_wo_control = TypedDict('t_dataset_item_wo_control', {
+    "features": torch.Tensor,
+    "profile": torch.Tensor,
+    "peak_id": int,
+    "peak_start": int,
+    "peak_end": int,
+    "start": int,
+    "end": int,
+    "chr": str,
+})

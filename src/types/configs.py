@@ -14,8 +14,8 @@ class RawDataConfig:
     bed_path: str
     bed_columns: List[str]
     profile_paths: List[str]
-    control_paths: List[str]
-    atac_paths: List[str]
+    control_paths: List[str] | None
+    atac_paths: List[str] | None
     genome_path: str
     chr_refseq: dict[str, str]
     chr_lengths: dict[str, int]

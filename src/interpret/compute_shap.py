@@ -7,7 +7,7 @@ import shap
 import torch
 from tqdm import tqdm
 
-from src.data import DisPDataset
+from src.data import SeqDataset
 from src.models import DNASeqModel
 from src.types import ExpConfig, t_dataset_item
 from src.utils import set_device, load_config
@@ -32,7 +32,7 @@ def interpret_model(
 
     config = load_config(osp.join(exp_dir, 'config.yaml'), ExpConfig)
 
-    dataset = DisPDataset(
+    dataset = SeqDataset(
         seed=config.model_dev.seed,
         split_dir=config.raw_data.split_dir,
         context_len=config.raw_data.context_len,
