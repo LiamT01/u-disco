@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from Bio import SeqIO
 from torch.utils.data import Dataset
 
-from src.types import t_dataset_item, t_dataset_item_wo_control
+from src.types import t_dataset_item, t_dataset_item_wo_control, t_dataset_item_seq, t_dataset_item_seq_control
 from src.utils import calc_avg_signal, get_split_indices, tokenizer, register_cache
 
 
@@ -16,7 +16,7 @@ class SeqDataset(Dataset):
     context_len: int
     bed: pd.DataFrame
     peak_ids: List[int]
-    profile_bws: List[pyBigWig]
+    profile_bws: List[pyBigWig] | None
     control_bws: List[pyBigWig] | None
     atac_bws: List[pyBigWig] | None
     jitter_max: int
@@ -33,7 +33,7 @@ class SeqDataset(Dataset):
             train_ratio: float,
             bed_path: str,
             bed_columns: List[str],
-            profile_paths: List[str],
+            profile_paths: List[str] | None,
             control_paths: List[str] | None,
             atac_paths: List[str] | None,
             genome_path: str,
@@ -77,7 +77,7 @@ class SeqDataset(Dataset):
         self.profile_bws = register_cache(
             key=' '.join(profile_paths),
             callback=lambda: [pyBigWig.open(path) for path in profile_paths],
-        )
+        ) if profile_paths is not None else None
         self.control_bws = register_cache(
             key=' '.join(control_paths),
             callback=lambda: [pyBigWig.open(path) for path in control_paths],
@@ -104,7 +104,12 @@ class SeqDataset(Dataset):
     def __len__(self):
         return len(self.peak_ids)
 
-    def __getitem__(self, idx: int) -> t_dataset_item | t_dataset_item_wo_control:
+    def __getitem__(self, idx: int) -> (
+            t_dataset_item |
+            t_dataset_item_wo_control |
+            t_dataset_item_seq |
+            t_dataset_item_seq_control
+    ):
         peak_id = self.peak_ids[idx]
         peak = self.bed.iloc[peak_id]
 
@@ -133,7 +138,9 @@ class SeqDataset(Dataset):
             end = end + jitter
             assert end - start == self.context_len
 
-        signal = calc_avg_signal(chr_name, start, end, self.profile_bws)
+        signal = None
+        if self.profile_bws is not None:
+            signal = calc_avg_signal(chr_name, start, end, self.profile_bws)
 
         control = None
         if self.control_bws is not None:
@@ -149,31 +156,55 @@ class SeqDataset(Dataset):
             seq = seq[::-1].translate(str.maketrans("ACGT", "TGCA"))
             if self.atac_bws is not None:
                 atac = atac[::-1].copy()
-            signal = signal[::-1].copy()
+            if self.profile_bws is not None:
+                signal = signal[::-1].copy()
 
         one_hot = F.one_hot(torch.LongTensor([tokenizer[x] for x in seq]), num_classes=5).float()
         features = one_hot if self.atac_bws is None else torch.cat([one_hot, torch.FloatTensor(atac)], dim=-1)
 
         if control is not None:
-            return {
-                "features": torch.FloatTensor(features),
-                "profile": torch.FloatTensor(signal),
-                "control": torch.FloatTensor(control),
-                "peak_id": peak_id,
-                "peak_start": peak_start,
-                "peak_end": peak_end,
-                "start": start,
-                "end": end,
-                "chr": chr_name,
-            }
+            if signal is not None:
+                return {
+                    "features": torch.FloatTensor(features),
+                    "profile": torch.FloatTensor(signal),
+                    "control": torch.FloatTensor(control),
+                    "peak_id": peak_id,
+                    "peak_start": peak_start,
+                    "peak_end": peak_end,
+                    "start": start,
+                    "end": end,
+                    "chr": chr_name,
+                }
+            else:
+                return {
+                    "features": torch.FloatTensor(features),
+                    "control": torch.FloatTensor(control),
+                    "peak_id": peak_id,
+                    "peak_start": peak_start,
+                    "peak_end": peak_end,
+                    "start": start,
+                    "end": end,
+                    "chr": chr_name,
+                }
         else:
-            return {
-                "features": torch.FloatTensor(features),
-                "profile": torch.FloatTensor(signal),
-                "peak_id": peak_id,
-                "peak_start": peak_start,
-                "peak_end": peak_end,
-                "start": start,
-                "end": end,
-                "chr": chr_name,
-            }
+            if signal is not None:
+                return {
+                    "features": torch.FloatTensor(features),
+                    "profile": torch.FloatTensor(signal),
+                    "peak_id": peak_id,
+                    "peak_start": peak_start,
+                    "peak_end": peak_end,
+                    "start": start,
+                    "end": end,
+                    "chr": chr_name,
+                }
+            else:
+                return {
+                    "features": torch.FloatTensor(features),
+                    "peak_id": peak_id,
+                    "peak_start": peak_start,
+                    "peak_end": peak_end,
+                    "start": start,
+                    "end": end,
+                    "chr": chr_name,
+                }

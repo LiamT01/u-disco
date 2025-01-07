@@ -31,3 +31,24 @@ t_dataset_item_wo_control = TypedDict('t_dataset_item_wo_control', {
     "end": int,
     "chr": str,
 })
+
+t_dataset_item_seq = TypedDict('t_dataset_item_seq', {
+    "features": torch.Tensor,
+    "peak_id": int,
+    "peak_start": int,
+    "peak_end": int,
+    "start": int,
+    "end": int,
+    "chr": str,
+})
+
+t_dataset_item_seq_control = TypedDict('t_dataset_item_seq_control', {
+    "features": torch.Tensor,
+    "control": torch.Tensor,
+    "peak_id": int,
+    "peak_start": int,
+    "peak_end": int,
+    "start": int,
+    "end": int,
+    "chr": str,
+})
