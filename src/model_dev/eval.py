@@ -4,10 +4,11 @@ from typing import List
 
 import numpy as np
 import torch
+from omegaconf import OmegaConf
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from src.data import DisPDataset
+from src.data import SeqDataset
 from src.metrics import pearson_corr
 from src.models import DNASeqModel
 from src.types import ExpConfig, t_dataset_item
@@ -71,7 +72,7 @@ def eval_exp(
         atac_path_list = overwrite_atac_paths if overwrite_atac_paths is not None \
             else config.raw_data.atac_paths
 
-    test_set = DisPDataset(
+    test_set = SeqDataset(
         seed=config.model_dev.seed,
         split_dir=config.raw_data.split_dir,
         context_len=config.raw_data.context_len,
@@ -96,9 +97,23 @@ def eval_exp(
 
     output_path = osp.join(exp_dir, "eval.log")
     print(f"Writing evaluation results to {output_path}", flush=True)
+
+    output_yaml_path = osp.join(exp_dir, "eval.yaml")
+    print(f"Writing evaluation results to {output_yaml_path}", flush=True)
+    yaml_data = []
+
     for checkpoint_path in tqdm(sorted(glob(osp.join(exp_dir, "checkpoints", "*.pth")))):
         loss, pcc, pcc_std = eval_checkpoint(config, test_loader, model, checkpoint_path, device)
         with open(output_path, "a") as f:
             f.write(f"{checkpoint_path}\n")
             f.write(f"\tTest loss: {loss:.8f}\n"
                     f"\tPCC: {pcc:.8f} (std: {pcc_std:.8f})\n")
+
+        yaml_data.append({
+            "epoch": int(osp.basename(checkpoint_path).lstrip("epoch_").rstrip(".pth")),
+            "loss": loss,
+            "pcc": pcc,
+            "pcc_std": pcc_std,
+        })
+
+    OmegaConf.save(OmegaConf.create(yaml_data), output_yaml_path)
