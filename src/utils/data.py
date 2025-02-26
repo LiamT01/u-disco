@@ -46,7 +46,7 @@ def get_split_indices(
     )
 
     if osp.exists(split_path):
-        print(f"Loading split from {split_path}")
+        print(f"Loading split from {split_path}", flush=True)
         split_res = np.load(split_path, allow_pickle=True)
         return {
             'train': split_res['train'].tolist(),
@@ -54,7 +54,7 @@ def get_split_indices(
             'test': split_res['test'].tolist(),
         }
 
-    print(f"Generating splits and saving to {split_path}")
+    print(f"Generating splits and saving to {split_path}", flush=True)
     np.random.seed(seed)
     random.seed(seed)
 
@@ -68,7 +68,8 @@ def get_split_indices(
         mid = (start + end) // 2
         chr_length = chr_lengths[cast(str, row['chr'])]
         if mid - context_len // 2 < 0 or mid + context_len // 2 > chr_length:
-            print(f"Skipping {i}th data {row['chr']}:{start}-{end} due to {end} + {context_len // 2} > {chr_length}")
+            print(f"Skipping {i}th data {row['chr']}:{start}-{end} due to {end} + {context_len // 2} > {chr_length}",
+                  flush=True)
             excluded_indices.append(cast(int, i))
             continue
         if row['chr'] in held_out_chrs:
