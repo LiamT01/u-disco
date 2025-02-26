@@ -1,0 +1,66 @@
+cell_type: 'SKNMC'
+split_dir: 'metadata/splits/SKNMC'
+context_len: 20000
+held_out_chrs: ['chr1', 'chr8', 'chr21']
+train_ratio: 0.8
+bed_path: 'data/SKNMC_wt_150bp_bisox_peak_in_both_reps_rename.bed'
+bed_columns: ['chr', 'start', 'end', 'name', 'score', 'strand', 'signal', 'pvalue', 'qvalue']
+control_paths:
+  - 'data/GSM5736448_SKNMC_Input_rep1.bw'
+  - 'data/GSM5736449_SKNMC_Input_rep2.bw'
+profile_paths:
+  - 'data/GSM5736444_SKNMC_bisox_rep1.bw'
+  - 'data/GSM5736445_SKNMC_bisox_rep2.bw'
+atac_paths:
+  - 'data/GSM5736388_SKNMC_ATAC.bw'
+genome_path: 'data/hg19/ncbi_dataset/data/GCF_000001405.25/GCF_000001405.25_GRCh37.p13_genomic.fna'
+chr_refseq:
+  'chr1': 'NC_000001.10'
+  'chr2': 'NC_000002.11'
+  'chr3': 'NC_000003.11'
+  'chr4': 'NC_000004.11'
+  'chr5': 'NC_000005.9'
+  'chr6': 'NC_000006.11'
+  'chr7': 'NC_000007.13'
+  'chr8': 'NC_000008.10'
+  'chr9': 'NC_000009.11'
+  'chr10': 'NC_000010.10'
+  'chr11': 'NC_000011.9'
+  'chr12': 'NC_000012.11'
+  'chr13': 'NC_000013.10'
+  'chr14': 'NC_000014.8'
+  'chr15': 'NC_000015.9'
+  'chr16': 'NC_000016.9'
+  'chr17': 'NC_000017.10'
+  'chr18': 'NC_000018.9'
+  'chr19': 'NC_000019.9'
+  'chr20': 'NC_000020.10'
+  'chr21': 'NC_000021.8'
+  'chr22': 'NC_000022.10'
+  'chrX': 'NC_000023.10'
+  'chrY': 'NC_000024.9'
+chr_lengths:
+  'chr1': 249250621
+  'chr2': 243199373
+  'chr3': 198022430
+  'chr4': 191154276
+  'chr5': 180915260
+  'chr6': 171115067
+  'chr7': 159138663
+  'chr8': 146364022
+  'chr9': 141213431
+  'chr10': 135534747
+  'chr11': 135006516
+  'chr12': 133851895
+  'chr13': 115169878
+  'chr14': 107349540
+  'chr15': 102531392
+  'chr16': 90354753
+  'chr17': 81195210
+  'chr18': 78077248
+  'chr19': 59128983
+  'chr20': 63025520
+  'chr21': 48129895
+  'chr22': 51304566
+  'chrX': 155270560
+  'chrY': 59373566

@@ -1,0 +1,22 @@
+seed: 0
+
+use_atac: false
+use_control: true
+
+backend_model_module: 'src.models.bpnet'
+backend_model_class: 'BPNet'
+vocab_size: 5
+n_epi: 0
+dropout_p: null
+linear_upsample: null
+noise_std: 0
+
+n_epochs: 200
+lr: 5e-4
+bs: 32
+
+jitter_max: 1000
+reverse_complement_p: 0.2
+
+use_prior: true
+reg_loss_weight: 15000
