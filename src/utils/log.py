@@ -1,4 +1,5 @@
 import sys
+from datetime import datetime
 
 import numpy as np
 from loguru import logger
@@ -14,3 +15,7 @@ def get_logger(output_file: str = None):
 
 def get_num_digits(number: int) -> int:
     return int(np.log10(number)) + 1
+
+
+def get_timestamp() -> str:
+    return datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
