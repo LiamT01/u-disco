@@ -112,6 +112,7 @@ saved/
 .vscode/
 .idea/
 __MACOSX/
+.DS_Store
 
 # experiments
 /exp/
