@@ -64,11 +64,3 @@ class BPNet(IBackendModel):
             in_channels=config.model_dev.vocab_size + config.model_dev.n_epi,
             use_control=config.model_dev.use_control,
         )
-
-
-if __name__ == '__main__':
-    _model = BPNet(in_channels=5, use_control=True)
-    _input = torch.randn((4, 20000, 5))
-    _control = torch.randn((4, 20000))
-    _output = _model(_input, _control)
-    print(_output.shape)
