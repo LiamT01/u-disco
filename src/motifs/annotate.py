@@ -6,7 +6,7 @@ import h5py
 import numpy as np
 from omegaconf import OmegaConf
 
-from src.data import DisPDataset
+from src.data import SeqDataset
 from src.types import MotifInstance, t_seqlet_dict, ExpConfig, AllMotifInstances
 from src.types import PatternConfig
 from src.utils import load_config
@@ -31,7 +31,7 @@ def annotate_patterns(
         output_dir: str,
 ):
     config = load_config(osp.join(exp_dir, 'config.yaml'), ExpConfig)
-    dataset = DisPDataset(
+    dataset = SeqDataset(
         seed=config.model_dev.seed,
         split_dir=config.raw_data.split_dir,
         context_len=config.raw_data.context_len,

@@ -8,20 +8,20 @@ import torch.nn.functional as F
 from Bio import SeqIO
 from torch.utils.data import Dataset
 
-from src.types import t_dataset_item
+from src.types import t_dataset_item, t_dataset_item_wo_control
 from src.utils import calc_avg_signal, get_split_indices, tokenizer
 
 
-class DisPDataset(Dataset):
+class SeqDataset(Dataset):
     context_len: int
     bed: pd.DataFrame
     peak_ids: List[int]
     profile_bws: List[pyBigWig]
-    control_bws: List[pyBigWig]
+    control_bws: List[pyBigWig] | None
     atac_bws: List[pyBigWig] | None
     jitter_max: int
     reverse_complement_p: float
-    chr_to_hg19: dict[str, SeqIO.SeqRecord]
+    chr_to_fasta: dict[str, SeqIO.SeqRecord]
     chr_lengths: dict[str, int]
 
     def __init__(
@@ -34,7 +34,7 @@ class DisPDataset(Dataset):
             bed_path: str,
             bed_columns: List[str],
             profile_paths: List[str],
-            control_paths: List[str],
+            control_paths: List[str] | None,
             atac_paths: List[str] | None,
             genome_path: str,
             chr_refseq: dict[str, str],
@@ -44,6 +44,8 @@ class DisPDataset(Dataset):
             reverse_complement_p: float,
     ):
         super().__init__()
+        assert control_paths is None or len(
+            control_paths) > 0, "control_path_list, when not None, must be a non-empty list"
         assert atac_paths is None or len(
             atac_paths) > 0, "atac_path_list, when not None, must be a non-empty list"
         assert split in ["train", "val", "test", "all"], "split must be one of 'train', 'val', 'test', or 'all'"
@@ -70,20 +72,20 @@ class DisPDataset(Dataset):
             self.peak_ids = sorted(split_ids[cast(Literal['train', 'val', 'test'], split)])
 
         self.profile_bws = [pyBigWig.open(path) for path in profile_paths]
-        self.control_bws = [pyBigWig.open(path) for path in control_paths]
+        self.control_bws = [pyBigWig.open(path) for path in control_paths] if control_paths is not None else None
         self.atac_bws = [pyBigWig.open(atac_path) for atac_path in atac_paths] if atac_paths is not None else None
 
         self.jitter_max = jitter_max
         self.reverse_complement_p = reverse_complement_p
 
         record_dict = SeqIO.index(genome_path, "fasta")
-        self.chr_to_hg19 = {k: record_dict[v] for k, v in chr_refseq.items()}
+        self.chr_to_fasta = {k: record_dict[v] for k, v in chr_refseq.items()}
         self.chr_lengths = chr_lengths
 
     def __len__(self):
         return len(self.peak_ids)
 
-    def __getitem__(self, idx: int) -> t_dataset_item:
+    def __getitem__(self, idx: int) -> t_dataset_item | t_dataset_item_wo_control:
         peak_id = self.peak_ids[idx]
         peak = self.bed.iloc[peak_id]
 
@@ -91,11 +93,13 @@ class DisPDataset(Dataset):
         peak_end = int(cast(np.int64, peak['end']))
         chr_name = str(peak['chr'])
 
-        chr_seq = self.chr_to_hg19[chr_name]
+        chr_seq = self.chr_to_fasta[chr_name]
 
         mid = (peak_start + peak_end) // 2
         start = max(mid - self.context_len // 2, 0)
         end = min(mid + self.context_len // 2, len(chr_seq))
+
+        assert end - start == self.context_len
 
         if self.jitter_max > 0:
             jitter = np.random.randint(-self.jitter_max, self.jitter_max)
@@ -111,7 +115,11 @@ class DisPDataset(Dataset):
             assert end - start == self.context_len
 
         signal = calc_avg_signal(chr_name, start, end, self.profile_bws)
-        control = calc_avg_signal(chr_name, start, end, self.control_bws)
+
+        control = None
+        if self.control_bws is not None:
+            control = calc_avg_signal(chr_name, start, end, self.control_bws)
+
         seq = str(chr_seq[start:end].seq).upper()
 
         atac = None
@@ -127,14 +135,26 @@ class DisPDataset(Dataset):
         one_hot = F.one_hot(torch.LongTensor([tokenizer[x] for x in seq]), num_classes=5).float()
         features = one_hot if self.atac_bws is None else torch.cat([one_hot, torch.FloatTensor(atac)], dim=-1)
 
-        return {
-            "features": torch.FloatTensor(features),
-            "profile": torch.FloatTensor(signal),
-            "control": torch.FloatTensor(control),
-            "peak_id": peak_id,
-            "peak_start": peak_start,
-            "peak_end": peak_end,
-            "start": start,
-            "end": end,
-            "chr": chr_name,
-        }
+        if control is not None:
+            return {
+                "features": torch.FloatTensor(features),
+                "profile": torch.FloatTensor(signal),
+                "control": torch.FloatTensor(control),
+                "peak_id": peak_id,
+                "peak_start": peak_start,
+                "peak_end": peak_end,
+                "start": start,
+                "end": end,
+                "chr": chr_name,
+            }
+        else:
+            return {
+                "features": torch.FloatTensor(features),
+                "profile": torch.FloatTensor(signal),
+                "peak_id": peak_id,
+                "peak_start": peak_start,
+                "peak_end": peak_end,
+                "start": start,
+                "end": end,
+                "chr": chr_name,
+            }

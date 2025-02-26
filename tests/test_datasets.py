@@ -1,4 +1,4 @@
-from src.data import DisPDataset
+from src.data import SeqDataset
 from src.types import RawDataConfig
 from src.utils import load_config
 
@@ -6,7 +6,7 @@ from src.utils import load_config
 def test_disp():
     raw_data_config = load_config('configs/raw_data/disp_seq_sknmc.yaml', RawDataConfig)
 
-    dataset = DisPDataset(
+    dataset = SeqDataset(
         seed=0,
         split_dir=raw_data_config.split_dir,
         context_len=raw_data_config.context_len,
