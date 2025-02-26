@@ -9,7 +9,7 @@ from Bio import SeqIO
 from torch.utils.data import Dataset
 
 from src.types import t_dataset_item, t_dataset_item_wo_control
-from src.utils import calc_avg_signal, get_split_indices, tokenizer
+from src.utils import calc_avg_signal, get_split_indices, tokenizer, register_cache
 
 
 class SeqDataset(Dataset):
@@ -52,7 +52,10 @@ class SeqDataset(Dataset):
 
         self.context_len = context_len
 
-        self.bed = pd.read_csv(bed_path, delimiter="\t", header=None)
+        self.bed = register_cache(
+            key=bed_path,
+            callback=lambda: pd.read_csv(bed_path, delimiter="\t", header=None),
+        )
         assert self.bed.shape[1] == len(bed_columns), f"Bed file must have {len(bed_columns)} columns"
         self.bed.columns = bed_columns
 
@@ -71,15 +74,31 @@ class SeqDataset(Dataset):
         else:
             self.peak_ids = sorted(split_ids[cast(Literal['train', 'val', 'test'], split)])
 
-        self.profile_bws = [pyBigWig.open(path) for path in profile_paths]
-        self.control_bws = [pyBigWig.open(path) for path in control_paths] if control_paths is not None else None
-        self.atac_bws = [pyBigWig.open(atac_path) for atac_path in atac_paths] if atac_paths is not None else None
+        self.profile_bws = register_cache(
+            key=' '.join(profile_paths),
+            callback=lambda: [pyBigWig.open(path) for path in profile_paths],
+        )
+        self.control_bws = register_cache(
+            key=' '.join(control_paths),
+            callback=lambda: [pyBigWig.open(path) for path in control_paths],
+        ) if control_paths is not None else None
+        self.atac_bws = register_cache(
+            key=' '.join(atac_paths),
+            callback=lambda: [pyBigWig.open(atac_path) for atac_path in atac_paths],
+        ) if atac_paths is not None else None
 
         self.jitter_max = jitter_max
         self.reverse_complement_p = reverse_complement_p
 
-        record_dict = SeqIO.index(genome_path, "fasta")
-        self.chr_to_fasta = {k: record_dict[v] for k, v in chr_refseq.items()}
+        def preprocess_genome():
+            record_dict = SeqIO.index(genome_path, "fasta")
+            return {k: record_dict[v] for k, v in chr_refseq.items()}
+
+        self.chr_to_fasta = register_cache(
+            key=genome_path,
+            callback=preprocess_genome,
+        )
+
         self.chr_lengths = chr_lengths
 
     def __len__(self):
