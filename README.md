@@ -1,5 +1,9 @@
 # U-DisCo: A deep learning framework to explore genome-wide interactions of intrinsically disordered proteins with DNA
 
+## Updates
+
+This repository is no longer maintained, and all work has been moved to [https://github.com/ma-compbio-lab/HotProt](https://github.com/ma-compbio-lab/HotProt).
+
 ## Overview
 
 ![U-DisCo](./assets/u-disco.png)
